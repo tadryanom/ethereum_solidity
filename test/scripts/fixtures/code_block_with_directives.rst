@@ -21,7 +21,7 @@ A normal block with parameters.
 
 Text.
 
-::
+.. code-block:: solidity
 
     contract C {}
 

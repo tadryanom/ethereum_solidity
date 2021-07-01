@@ -15,7 +15,7 @@ Some text
 
     A Warning.
 
-::
+.. code-block:: solidity
 
     contract C {}
 
