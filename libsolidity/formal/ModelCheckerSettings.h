@@ -106,6 +106,7 @@ struct ModelCheckerSettings
 	ModelCheckerEngine engine = ModelCheckerEngine::None();
 	ModelCheckerTargets targets = ModelCheckerTargets::Default();
 	std::optional<unsigned> timeout;
+	bool showUnproved = false;
 };
 
 }

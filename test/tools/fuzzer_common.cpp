@@ -16,10 +16,10 @@
 */
 // SPDX-License-Identifier: GPL-3.0
 
-#include "libsolidity/formal/ModelCheckerSettings.h"
 #include <test/tools/fuzzer_common.h>
 
 #include <libsolidity/interface/CompilerStack.h>
+#include <libsolidity/formal/ModelCheckerSettings.h>
 
 #include <libsolutil/JSON.h>
 
@@ -104,7 +104,8 @@ void FuzzerUtil::testCompiler(
 			frontend::ModelCheckerContracts::Default(),
 			frontend::ModelCheckerEngine::All(),
 			frontend::ModelCheckerTargets::Default(),
-			/*timeout=*/1
+			/*timeout=*/1,
+			/*showUnproved=*/false
 		});
 	}
 	compiler.setSources(_input);
