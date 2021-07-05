@@ -811,7 +811,7 @@ jobs:
 
   t_ems_solcjs:
     docker:
-      - image: buildpack-deps:hirsute
+      - image: buildpack-deps:bullseye
     environment:
       TERM: xterm
     steps:
