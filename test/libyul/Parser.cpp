@@ -551,6 +551,8 @@ BOOST_AUTO_TEST_CASE(customSourceLocations_ensure_last_match)
 	BOOST_REQUIRE(!!result);
 	BOOST_REQUIRE(holds_alternative<VariableDeclaration>(result->statements.at(0)));
 	VariableDeclaration const& varDecl = get<VariableDeclaration>(result->statements.at(0));
+
+	// Ensure the latest @src per documentation-comment is used (0:30:40).
 	CHECK_LOCATION(varDecl.debugData->location, sourceText, 30, 40);
 }
 

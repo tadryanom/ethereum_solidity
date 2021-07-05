@@ -29,6 +29,8 @@
 #include <libsolutil/Common.h>
 #include <libsolutil/Visitor.h>
 
+#include <range/v3/view/subrange.hpp>
+
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
@@ -108,17 +110,17 @@ void Parser::fetchSourceLocationFromComment()
 	if (m_scanner->currentCommentLiteral().empty())
 		return;
 
-	static std::regex const lineRE = std::regex(
-		R"~~~((^|\s+)@src\s+(-1|\d+):(-1|\d+):(-1|\d+)(\s+|$))~~~",
+	static regex const lineRE = std::regex(
+		R"~~~((^|\s*)@src\s+(-1|\d+):(-1|\d+):(-1|\d+)(\s+|$))~~~",
 		std::regex_constants::ECMAScript | std::regex_constants::optimize
 	);
 
-	string text = m_scanner->currentCommentLiteral();
-	while (!text.empty())
+	string const text = m_scanner->currentCommentLiteral();
+	auto from = sregex_iterator(text.begin(), text.end(), lineRE);
+	auto to = sregex_iterator();
+
+	for (auto const& matchResult: ranges::make_subrange(from, to))
 	{
-		std::smatch matchResult;
-		if (!std::regex_search(text, matchResult, lineRE))
-			return;
 		solAssert(matchResult.size() == 6, "");
 
 		auto const sourceIndex = toInt(matchResult[2].str());
@@ -140,8 +142,6 @@ void Parser::fetchSourceLocationFromComment()
 
 			m_locationOverride = SourceLocation{*start, *end, charStream};
 		}
-
-		text = text.substr(static_cast<size_t>(matchResult.length()));
 	}
 }
 
