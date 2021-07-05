@@ -520,6 +520,20 @@ BOOST_AUTO_TEST_CASE(customSourceLocations_invalid_suffix)
 	CHECK_LOCATION(result->debugData->location, "", -1, -1);
 }
 
+BOOST_AUTO_TEST_CASE(customSourceLocations_unspecified)
+{
+	ErrorList errorList;
+	ErrorReporter reporter(errorList);
+	auto const sourceText = R"(
+		/// @src -1:-1:-1
+		{}
+	)";
+	EVMDialectTyped const& dialect = EVMDialectTyped::instance(EVMVersion{});
+	shared_ptr<Block> result = parse(sourceText, dialect, reporter);
+	BOOST_REQUIRE(!!result);
+	CHECK_LOCATION(result->debugData->location, "", -1, -1);
+}
+
 BOOST_AUTO_TEST_CASE(customSourceLocations_ensure_last_match)
 {
 	ErrorList errorList;

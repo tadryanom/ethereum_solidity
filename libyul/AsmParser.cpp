@@ -54,21 +54,6 @@ shared_ptr<DebugData const> updateLocationEndFrom(
 	return make_shared<DebugData const>(updatedLocation);
 }
 
-optional<unsigned> toUnsignedInt(string const& _value)
-{
-	try
-	{
-		auto const ulong = stoul(_value);
-		if (ulong > std::numeric_limits<unsigned>::max())
-			return nullopt;
-		return static_cast<unsigned>(ulong);
-	}
-	catch (...)
-	{
-		return nullopt;
-	}
-}
-
 optional<int> toInt(string const& _value)
 {
 	try
@@ -124,7 +109,7 @@ void Parser::fetchSourceLocationFromComment()
 		return;
 
 	static std::regex const lineRE = std::regex(
-		R"~~~((^|\s+)@src\s+(\d+):(-1|\d+):(-1|\d+)(\s+|$))~~~",
+		R"~~~((^|\s+)@src\s+(-1|\d+):(-1|\d+):(-1|\d+)(\s+|$))~~~",
 		std::regex_constants::ECMAScript | std::regex_constants::optimize
 	);
 
@@ -136,7 +121,7 @@ void Parser::fetchSourceLocationFromComment()
 			return;
 		solAssert(matchResult.size() == 6, "");
 
-		auto const sourceIndex = toUnsignedInt(matchResult[2].str());
+		auto const sourceIndex = toInt(matchResult[2].str());
 		auto const start = toInt(matchResult[3].str());
 		auto const end = toInt(matchResult[4].str());
 
@@ -146,11 +131,11 @@ void Parser::fetchSourceLocationFromComment()
 			m_errorReporter.syntaxError(6367_error, commentLocation, "Invalid value in source location mapping. Could not parse location specification.");
 		else if (!((start < 0 && end < 0) || (start >= 0 && *start <= *end)))
 			m_errorReporter.syntaxError(5798_error, commentLocation, "Invalid value in source location mapping. Start offset larger than end offset.");
-		else if (!(sourceIndex >= 0 && m_charStreamMap->count(*sourceIndex)))
+		else if (!(sourceIndex >= 0 && m_charStreamMap->count(static_cast<unsigned>(*sourceIndex))))
 			m_errorReporter.syntaxError(2674_error, commentLocation, "Invalid source mapping. Source index not defined via @use-src.");
-		else
+		else if (sourceIndex >= 0)
 		{
-			shared_ptr<CharStream> charStream = m_charStreamMap->at(*sourceIndex);
+			shared_ptr<CharStream> charStream = m_charStreamMap->at(static_cast<unsigned>(*sourceIndex));
 			solAssert(charStream, "");
 
 			m_locationOverride = SourceLocation{*start, *end, charStream};
