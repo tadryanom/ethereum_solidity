@@ -12,6 +12,7 @@ import os
 import hashlib
 from os.path import join, isfile, split, basename
 from argparse import ArgumentParser
+from itertools import chain
 
 def extract_test_cases(path):
     with open(path, encoding="utf8", errors='ignore', mode='r', newline='') as file:
@@ -36,11 +37,42 @@ def extract_test_cases(path):
 
     return tests
 
-# Extract code examples based on a start marker
+def extract_solidity_docs_cases(path):
+    tests = extract_docs_cases(path, ".. code-block:: solidity")
+
+    codeStart = "(// SPDX-License-Identifier:|pragma solidity|contract.*{|library.*{|interface.*{)"
+
+    # Filter out tests that are not supposed to be compilable.
+    return [
+        test.lstrip("\n")
+        for test in tests
+        if re.search(r'^\s{4}' + codeStart, test, re.MULTILINE) is not None
+    ]
+
+def extract_yul_docs_cases(path):
+    tests = extract_docs_cases(path, ".. code-block:: yul")
+
+    def wrap_in_object(code):
+        for line in code.splitlines():
+            line = line.lstrip()
+            if line.startswith("//"):
+                continue
+            if not line.startswith("object") and not line.startswith("{"):
+                return "%s\n%s\n%s" % ("{", code, "}")
+            break
+
+        return code
+
+    return [
+        wrap_in_object(test)
+        for test in tests
+        if test.strip() != ""
+    ]
+
+# Extract code examples based on the 'beginMarker' parameter
 # up until we reach EOF or a line that is not empty and doesn't start with 4
 # spaces.
-def extract_docs_cases(path):
-    beginMarker = '.. code-block:: solidity'
+def extract_docs_cases(path, beginMarker):
     immediatelyAfterMarker = False
     insideBlock = False
     tests = []
@@ -66,35 +98,37 @@ def extract_docs_cases(path):
             immediatelyAfterMarker = True
             tests += ['']
 
-    codeStart = "(// SPDX-License-Identifier:|pragma solidity|contract.*{|library.*{|interface.*{)"
+    return tests
 
-    # Filter out tests that are not supposed to be compilable.
-    return [
-        test.lstrip("\n")
-        for test in tests
-        if re.search(r'^\s{4}' + codeStart, test, re.MULTILINE) is not None
-    ]
-
-def write_cases(f, tests):
+def write_cases(f, tests, yulTests):
     cleaned_filename = f.replace(".","_").replace("-","_").replace(" ","_").lower()
-    for test in tests:
+    for lang, test in chain(
+        map(lambda t: ("sol", t), tests),
+        map(lambda t: ("yul", t), yulTests)
+    ):
         # When code examples are extracted they are indented by 8 spaces, which violates the style guide,
         # so before checking remove 4 spaces from each line.
         remainder = re.sub(r'^ {4}', '', test, 0, re.MULTILINE)
-        sol_filename = 'test_%s_%s.sol' % (hashlib.sha256(test.encode("utf-8")).hexdigest(), cleaned_filename)
+        sol_filename = 'test_%s_%s.%s' % (hashlib.sha256(test.encode("utf-8")).hexdigest(), cleaned_filename, lang)
         with open(sol_filename, mode='w', encoding='utf8', newline='') as fi:
             fi.write(remainder)
 
-def extract_and_write(path):
+def extract_and_write(path, yulOnly):
+    yulCases = []
+    cases = []
+
     if path.lower().endswith('.rst'):
-        cases = extract_docs_cases(path)
+        if not yulOnly:
+            cases = extract_solidity_docs_cases(path)
+
+        yulCases  = extract_yul_docs_cases(path)
     elif path.endswith('.sol'):
         with open(path, mode='r', encoding='utf8', newline='') as f:
             cases = [f.read()]
     else:
         cases = extract_test_cases(path)
 
-    write_cases(basename(path), cases)
+    write_cases(basename(path), cases, yulCases)
 
 if __name__ == '__main__':
     script_description = (
@@ -104,11 +138,18 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(description=script_description)
     parser.add_argument(dest='path', help='Path to file or directory to look for code in.')
+    parser.add_argument(
+        '--yul-only',
+        dest='yulOnly',
+        default=False,
+        action='store_true',
+        help="Extract only yul test code blocks."
+    )
     options = parser.parse_args()
     path = options.path
 
     if isfile(path):
-        extract_and_write(path)
+        extract_and_write(path, options.yulOnly)
     else:
         for root, subdirs, files in os.walk(path):
             if '_build' in subdirs:
@@ -119,4 +160,4 @@ if __name__ == '__main__':
                 if basename(f) == "invalid_utf8_sequence.sol":
                     continue  # ignore the test with broken utf-8 encoding
                 path = join(root, f)
-                extract_and_write(path)
+                extract_and_write(path, options.yulOnly)

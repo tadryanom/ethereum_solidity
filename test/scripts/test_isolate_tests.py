@@ -6,7 +6,7 @@ from unittest_helpers import FIXTURE_DIR, load_fixture
 
 # NOTE: This test file file only works with scripts/ added to PYTHONPATH so pylint can't find the imports
 # pragma pylint: disable=import-error
-from isolate_tests import extract_docs_cases
+from isolate_tests import extract_solidity_docs_cases
 # pragma pylint: enable=import-error
 
 
@@ -35,7 +35,7 @@ class TestExtractDocsCases(unittest.TestCase):
             "\n",
         ]
 
-        self.assertEqual(extract_docs_cases(CODE_BLOCK_RST_PATH), expected_cases)
+        self.assertEqual(extract_solidity_docs_cases(CODE_BLOCK_RST_PATH), expected_cases)
 
     def test_solidity_block_with_directives(self):
         expected_cases = [
@@ -59,4 +59,4 @@ class TestExtractDocsCases(unittest.TestCase):
             "\n",
         ]
 
-        self.assertEqual(extract_docs_cases(CODE_BLOCK_WITH_DIRECTIVES_RST_PATH), expected_cases)
+        self.assertEqual(extract_solidity_docs_cases(CODE_BLOCK_WITH_DIRECTIVES_RST_PATH), expected_cases)
