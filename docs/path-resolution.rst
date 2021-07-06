@@ -351,7 +351,8 @@ This ensures that the result is predictable and as platform-independent as possi
     directory tree on the same drive.
 
 Once canonicalized, the base path is stripped from all source file paths that start with it.
-If the base path is empty, it is treated as if it was equal to the path to the current working directory.
+If the base path is empty (e.g. if it is not explicitly provided), it is treated as if it was equal
+to the path to the current working directory with all symbolic links resolved.
 The result becomes the source unit name.
 
 .. index:: ! remapping; import, ! import; remapping, ! remapping; context, ! remapping; prefix, ! remapping; target
