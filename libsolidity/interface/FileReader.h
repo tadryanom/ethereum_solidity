@@ -84,21 +84,12 @@ public:
 		return [this](std::string const& _kind, std::string const& _path) { return readFile(_kind, _path); };
 	}
 
-	/// Normalizes a filesystem path in a way that removes small, inconsequential differences. Specifically:
-	/// - Makes the path either be absolute or have slash as root (note that on Windows paths with
-	///   slash as root are not considered absolute by Boost). If it is empty, it becomes
-	///   the current working directory.
-	/// - Collapses redundant . and .. segments.
-	/// - Squashes sequences of multiple path separators into one.
-	/// - Ensures that forward slashes are used as path separators on all platforms.
-	/// - Removes the root name (e.g. drive letter on Windows) when it matches the root name in the
-	///   path to the current working directory.
-	/// The specified path does not have to actually exist and the function:
-	/// - Does NOT resolve symlinks (except for symlinks in the path to the current working directory) .
-	/// - Does NOT check if the path refers to a file or a directory. If the path ends with a slash,
-	///   the slash is preserved even if it's a file.
-	/// - Preserves case. Even if the filesystem is case-insensitive but case-preserving and the
-	///   case differs, the actual case from disk is NOT detected.
+	/// Normalizes a filesystem path to make it include all components up to the filesystem root,
+	/// remove small, inconsequential differences that do not affect the meaning and make it look
+	/// the same on all platforms (if possible). Symlinks in the path are not resolved.
+	/// The resulting path uses forward slashes as path separators, has no redundant separators,
+	/// has no redundant . or .. segments and has no root name if removing it does not change the meaning.
+	/// The path does not have to actually exist.
 	static boost::filesystem::path normalizeCLIPathForVFS(boost::filesystem::path const& _path);
 
 	/// Returns true if all the path components of @a _prefix are present at the beginning of @a _path.
