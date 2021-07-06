@@ -72,7 +72,7 @@ The initial content of the VFS depends on how you invoke the compiler:
        solc contract.sol /usr/local/dapp-bin/token.sol
 
    The source unit name of a file loaded this way is constructed by converting its path to a
-   canonical form and making it relative to base path if it is located inside.
+   canonical form and making it relative to the base path if it is located inside.
    See :ref:`Base Path Normalization and Stripping <base-path-normalization-and-stripping>` for
    a detailed description of this process.
 
@@ -320,12 +320,12 @@ directory of the compiler.
 Base Path Normalization and Stripping
 -------------------------------------
 
-When source file paths are specified on the command line, base path affects the source unit names
-assigned to them in compiler's VFS.
+When source file paths are specified on the command line, the base path affects the source unit
+names assigned to them in the compiler's VFS.
 To compute the names, both base path and source file paths must first be converted to a canonical form.
 This ensures that the result is predictable and as platform-independent as possible:
 
-- If a path is relative, it is made absolute by prepending current working directory to it.
+- If a path is relative, it is made absolute by prepending the current working directory to it.
 
   - If the path to the working directory contains symbolic links, they are resolved into actual
     directories.
@@ -350,8 +350,8 @@ This ensures that the result is predictable and as platform-independent as possi
     You can avoid such situations by ensuring that all the files are available within a single
     directory tree on the same drive.
 
-Once canonicalized, base path is stripped from all source file paths that start with it.
-If base path is empty, it is treated as if it was equal to the path to the current working directory.
+Once canonicalized, the base path is stripped from all source file paths that start with it.
+If the base path is empty, it is treated as if it was equal to the path to the current working directory.
 The result becomes the source unit name.
 
 .. index:: ! remapping; import, ! import; remapping, ! remapping; context, ! remapping; prefix, ! remapping; target
