@@ -107,6 +107,24 @@ ReadCallback::Result FileReader::readFile(string const& _kind, string const& _so
 
 boost::filesystem::path FileReader::normalizeCLIPathForVFS(boost::filesystem::path const& _path)
 {
+	// Detailed normalization rules:
+	// - Makes the path either be absolute or have slash as root (note that on Windows paths with
+	//   slash as root are not considered absolute by Boost). If it is empty, it becomes
+	//   the current working directory.
+	// - Collapses redundant . and .. segments.
+	// - Removes leading .. segments from an absolute path (i.e. /../../ becomes just /).
+	// - Squashes sequences of multiple path separators into one.
+	// - Ensures that forward slashes are used as path separators on all platforms.
+	// - Removes the root name (e.g. drive letter on Windows) when it matches the root name in the
+	//   path to the current working directory.
+	//
+	// Also note that this function:
+	// - Does NOT resolve symlinks (except for symlinks in the path to the current working directory).
+	// - Does NOT check if the path refers to a file or a directory. If the path ends with a slash,
+	//   the slash is preserved even if it's a file.
+	// - Preserves case. Even if the filesystem is case-insensitive but case-preserving and the
+	//   case differs, the actual case from disk is NOT detected.
+
 	boost::filesystem::path canonicalWorkDir = boost::filesystem::weakly_canonical(boost::filesystem::current_path());
 
 	// NOTE: On UNIX systems the path returned from current_path() has symlinks resolved while on
