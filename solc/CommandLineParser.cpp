@@ -640,7 +640,7 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 		}
 
 	if (addStdin)
-		m_fileReader.setSource(g_stdinFileName, readStandardInput());
+		m_fileReader.setSource(g_stdinFileName, readUntilEnd(cin));
 
 	if (m_fileReader.sourceCodes().size() == 0)
 	{
@@ -665,6 +665,10 @@ bool CommandLineInterface::parseLibraryOption(string const& _input)
 		// Thrown e.g. if path is too long.
 	}
 	catch (FileNotFound const&)
+	{
+		// Should not happen if `fs::is_regular_file` is correct.
+	}
+	catch (NotAFile const&)
 	{
 		// Should not happen if `fs::is_regular_file` is correct.
 	}
@@ -1037,7 +1041,9 @@ General Information)").c_str(),
 		)
 		(
 			g_argOptimizeRuns.c_str(),
-			po::value<unsigned>()->value_name("n")->default_value(200),
+			// TODO: The type in OptimiserSettings is size_t but we only accept values up to 2**32-1
+			// on the CLI and in Standard JSON. We should just switch to uint32_t everywhere.
+			po::value<unsigned>()->value_name("n")->default_value(static_cast<unsigned>(OptimiserSettings{}.expectedExecutionsPerDeployment)),
 			"Set for how many contract runs to optimize. "
 			"Lower values will optimize more for initial deployment cost, higher values will optimize more for high-frequency usage."
 		)
@@ -1251,7 +1257,7 @@ bool CommandLineInterface::processInput()
 		}
 		string input;
 		if (jsonFile.empty())
-			input = readStandardInput();
+			input = readUntilEnd(cin);
 		else
 		{
 			try
@@ -1261,6 +1267,11 @@ bool CommandLineInterface::processInput()
 			catch (FileNotFound const&)
 			{
 				serr() << "File not found: " << jsonFile << endl;
+				return false;
+			}
+			catch (NotAFile const&)
+			{
+				serr() << "Not a regular file: " << jsonFile << endl;
 				return false;
 			}
 		}
