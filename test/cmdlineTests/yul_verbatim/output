@@ -39,6 +39,7 @@ Text representation:
   dup2
     /* "yul_verbatim/input.yul":85:97   */
   sstore
+    /* "yul_verbatim/input.yul":111:132   */
   verbatimbytecode_646566
     /* "yul_verbatim/input.yul":137:158   */
   verbatimbytecode_78797a
